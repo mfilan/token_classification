@@ -3,6 +3,7 @@ import json
 from typing import List, Dict, Any, Optional, Union
 from dataclasses import dataclass, field, asdict
 import pandas as pd
+import numpy as np
 from PIL import Image
 import os
 
@@ -114,39 +115,88 @@ class Document:
         self.load_annotations(annot_path)
 
     def get_data(self) -> pd.DataFrame:
-        data_dict = []
+        data_list = []
         for text_object in self.text.text_objects:
             for word_object in text_object.words:
-                data_dict.append(asdict(word_object))
-        return pd.DataFrame(data_dict)
+                word_dict = asdict(word_object)
+                word_dict['annotation_path'] = self.annot_path
+                word_dict['image_path'] = self.image_path
+                data_list.append(word_dict)
+        return pd.DataFrame(data_list).to_dict(orient="list")
+
 
 @dataclass
 class DocumentWarehouse:
     image_dir: str
     annotation_dir: str
     documents: List[Document] = field(init=False, default_factory=list)
+    image_file_paths: List[str] = field(init=False, default_factory=list)
+    annotations_file_paths: List[str] = field(init=False, default_factory=list)
 
     def __post_init__(self) -> None:
-        image_files = list(Path(self.image_dir).rglob("*")) # TODO make here Enum class with possible image extensions
+        image_files = list(Path(self.image_dir).rglob("*"))  # TODO make here Enum class with possible image extensions
         annotations_files = list(Path(self.annotation_dir).rglob("*.json"))
-        file_pairs = self.pair_up_files(image_files, annotations_files)
-        for (image_file_path, annotations_file_path) in file_pairs:
-            self.documents.append(Document(image_file_path,annotations_file_path))
+        self.image_file_paths, self.annotations_file_paths = self.pair_up_files(image_files, annotations_files)
+        for (image_file_path, annotations_file_path) in zip(self.image_file_paths, self.annotations_file_paths):
+            self.documents.append(Document(image_file_path, annotations_file_path))
 
     @staticmethod
-    def pair_up_files(image_file_paths,annotations_file_paths):
+    def get_file_name(path: Path) -> str:
+        return str(path).split(os.path.sep)[-1].split(".")[0]
 
-        get_file_name = lambda x: str(x).split(os.path.sep)[-1].split(".")[0]
-        files = []
-        for image_file_path in sorted(image_file_paths,key = get_file_name):
-            for annotations_file_path in sorted(annotations_file_paths,key = get_file_name):
-                if get_file_name(image_file_path) == get_file_name(annotations_file_path):
-                    files.append((str(image_file_path), str(annotations_file_path)))
-        return files
+    def pair_up_files(self, image_file_paths, annotations_file_paths):
+        image_files = []
+        annotation_files = []
+        for image_file_path in sorted(image_file_paths, key=self.get_file_name):
+            for annotations_file_path in sorted(annotations_file_paths, key=self.get_file_name):
+                if self.get_file_name(image_file_path) == self.get_file_name(annotations_file_path):
+                    image_files.append(str(image_file_path))
+                    annotation_files.append(str(annotations_file_path))
+        return image_files, annotation_files
 
+    @staticmethod
+    def validate_numpy_arr(arr: np.array) -> Union[None, np.array]:
+        if arr.size == 0:
+            return None
+        return arr
+
+    @staticmethod
+    def select_data(dataframe: pd.DataFrame, indices: Union[np.array, None]) -> Union[pd.DataFrame, None]:
+        if indices is None:
+            return None
+        return dataframe.iloc[indices]
+
+    def split_indices(self, test_percentage: Optional[float] = 0.0,
+                      validation_percentage: Optional[float] = 0.0):
+        num_of_indices = len(self.documents)
+        all_indices = np.arange(num_of_indices)
+        np.random.shuffle(all_indices)
+        test_size = int(num_of_indices * test_percentage)
+        validation_size = int(num_of_indices * validation_percentage)
+        test_indices = self.validate_numpy_arr(all_indices[:test_size])
+        validation_indices = self.validate_numpy_arr(all_indices[test_size:validation_size])
+        training_indices = self.validate_numpy_arr(all_indices[test_size + validation_size:])
+        return test_indices, validation_indices, training_indices
 
     def get_data(self):
         data_dict = []
         for document_object in self.documents:
             data_dict += document_object.get_data()
         return data_dict
+
+    def get_all_data(self) -> pd.DataFrame:
+        data_list = []
+        for document_object in self.documents:
+            data_dict = document_object.get_data()
+            data_dict['image_path'] = document_object.image_path
+            data_list.append(data_dict)
+        return pd.DataFrame(data_list)
+
+    def get_datasets(self, test_percentage: Optional[float] = 0.0,
+                     validation_percentage: Optional[float] = 0.0) -> Dict[str, Union[pd.DataFrame, None]]:
+        test_indices, validation_indices, train_indices = self.split_indices(test_percentage=test_percentage,
+                                                                             validation_percentage=validation_percentage)
+        data: pd.DataFrame = self.get_all_data()
+        return {"validation_dataset": self.select_data(data, validation_indices),
+                "test_dataset": self.select_data(data, test_indices),
+                "train_dataset": self.select_data(data, train_indices)}
