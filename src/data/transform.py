@@ -1,11 +1,17 @@
 from pathlib import Path
 import json
-from typing import List, Dict, Any, Optional, Union
+from typing import List, Dict, Any, Optional, Union, TypedDict
 from dataclasses import dataclass, field, asdict
 import pandas as pd
 import numpy as np
 from PIL import Image
 import os
+
+
+class Datasets(TypedDict):
+    train_dataset: Union[pd.DataFrame, None]
+    test_dataset: Union[pd.DataFrame, None]
+    validation_dataset: Union[pd.DataFrame, None]
 
 
 @dataclass
@@ -193,10 +199,11 @@ class DocumentWarehouse:
         return pd.DataFrame(data_list)
 
     def get_datasets(self, test_percentage: Optional[float] = 0.0,
-                     validation_percentage: Optional[float] = 0.0) -> Dict[str, Union[pd.DataFrame, None]]:
-        test_indices, validation_indices, train_indices = self.split_indices(test_percentage=test_percentage,
-                                                                             validation_percentage=validation_percentage)
+                     validation_percentage: Optional[float] = 0.0) -> Datasets:
+        test_indices, validation_indices, train_indices = \
+            self.split_indices(test_percentage=test_percentage, validation_percentage=validation_percentage)
         data: pd.DataFrame = self.get_all_data()
-        return {"validation_dataset": self.select_data(data, validation_indices),
-                "test_dataset": self.select_data(data, test_indices),
-                "train_dataset": self.select_data(data, train_indices)}
+        datasets: Datasets = {'train_dataset': self.select_data(data, train_indices),
+                              'test_dataset': self.select_data(data, test_indices),
+                              'validation_dataset': self.select_data(data, validation_indices)}
+        return datasets
