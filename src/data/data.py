@@ -23,6 +23,7 @@ class NERDataset(Dataset):
         boxes = self.boxes[idx]
         word_labels = [self.label2id[word_label] for word_label in self.word_labels[idx]]
         encoded_inputs = self.processor(image, words, boxes=boxes, word_labels=word_labels,
-                                        return_special_tokens_mask=True,
                                         padding="max_length", truncation=True, return_tensors='pt')
+        for k, v in encoded_inputs.items():
+            encoded_inputs[k] = v.squeeze()
         return encoded_inputs
