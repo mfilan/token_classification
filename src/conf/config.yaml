@@ -2,10 +2,10 @@ defaults:
   - dataset: FUNSD
   - _self_
 params:
-  epoch_count: 20
+  epoch_count: 10
   lr: 5e-5
-  batch_size: 16
+  batch_size: 2
 
 model:
-  name: layoutlmv2
+  name: microsoft/layoutlmv3-base
 

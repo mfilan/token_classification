@@ -180,7 +180,7 @@ class DocumentWarehouse:
         test_size = int(num_of_indices * test_percentage)
         validation_size = int(num_of_indices * validation_percentage)
         test_indices = self.validate_numpy_arr(all_indices[:test_size])
-        validation_indices = self.validate_numpy_arr(all_indices[test_size:validation_size])
+        validation_indices = self.validate_numpy_arr(all_indices[test_size:validation_size+test_size])
         training_indices = self.validate_numpy_arr(all_indices[test_size + validation_size:])
         return test_indices, validation_indices, training_indices
 

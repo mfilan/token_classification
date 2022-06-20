@@ -1,6 +1,6 @@
 data_dir: ${hydra:runtime.cwd}/../datasets/FUNSD
-annotations_dir:  ${data_dir}/annotations
-images_dir: ${data_dir}/images
+annotations_dir:  ${hydra:runtime.cwd}/../datasets/FUNSD/annotations
+images_dir: ${hydra:runtime.cwd}/../datasets/FUNSD/images
 label2id:
   B-answer: 0
   E-answer: 1

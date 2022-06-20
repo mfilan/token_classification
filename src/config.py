@@ -1,13 +1,14 @@
 from dataclasses import dataclass
+from typing import Dict
 
 
 @dataclass
-class Paths:
+class Dataset:
     data_dir: str
-    test_data_annotations: str
-    test_data_images: str
-    train_data_annotations: str
-    train_data_images: str
+    annotations_dir: str
+    images_dir: str
+    label2id: Dict[str, int]
+    id2label: Dict[int, str]
 
 
 @dataclass
@@ -16,13 +17,15 @@ class Params:
     lr: float
     batch_size: int
 
+
 @dataclass
 class Model:
     name: str
     num_classes: int
 
+
 @dataclass
 class NERConfig:
-    paths: Paths
+    dataset: Dataset
     params: Params
     model: Model
