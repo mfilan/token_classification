@@ -1,5 +1,6 @@
 from dataclasses import dataclass
 from typing import Dict
+from src.model import ModelHandler
 
 
 @dataclass
@@ -16,6 +17,7 @@ class Params:
     epoch_count: int
     lr: float
     batch_size: int
+    device: str
 
 
 @dataclass
@@ -28,4 +30,4 @@ class Model:
 class NERConfig:
     dataset: Dataset
     params: Params
-    model: Model
+    model: ModelHandler

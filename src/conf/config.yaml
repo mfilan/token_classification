@@ -1,11 +1,19 @@
 defaults:
   - dataset: FUNSD
   - _self_
-params:
+training:
   epoch_count: 10
   lr: 5e-5
   batch_size: 2
+  device: cpu
+  test_percentage: 0.15
+  validation_percentage: 0.15
 
 model:
-  name: microsoft/layoutlmv3-base
+  _target_: model.ModelHandler
+  pretrained_model_name: microsoft/layoutlmv3-base
+  num_of_labels: 12
 
+params:
+  use_wandb: True
+  project_name: NERv3
