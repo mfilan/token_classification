@@ -18,10 +18,10 @@ def main(cfg) -> None:
 
     train_dataset = NERDataset(dataset['train_dataset'], cfg.model.processor, cfg.dataset.label2id)
     test_dataset = NERDataset(dataset['test_dataset'], cfg.model.processor, cfg.dataset.label2id)
-    validation_dataset = NERDataset(dataset['validation_dataset'], cfg.model.processor, cfg.dataset.label2id)
+    # validation_dataset = NERDataset(dataset['validation_dataset'], cfg.model.processor, cfg.dataset.label2id)
 
     training_dataloader = DataLoader(train_dataset, batch_size=cfg.training.batch_size, shuffle=True)
-    validation_dataloader = DataLoader(validation_dataset, batch_size=cfg.training.batch_size, shuffle=True)
+    validation_dataloader = None #DataLoader(validation_dataset, batch_size=cfg.training.batch_size, shuffle=True)
     test_dataloader = DataLoader(test_dataset, batch_size=cfg.training.batch_size)
 
     trainer = ModelTrainer(model=cfg.model.model.to(device),
