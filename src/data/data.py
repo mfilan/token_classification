@@ -1,3 +1,4 @@
+import torch
 from torch.utils.data import Dataset
 from transformers import LayoutLMv2Processor
 from typing import Dict
@@ -8,6 +9,7 @@ import pandas as pd
 class NERDataset(Dataset):
     def __init__(self, dataset_df: pd.DataFrame, processor: LayoutLMv2Processor, label2id: Dict[str, int]) -> None:
         self.boxes = dataset_df['normalized_box'].to_numpy()
+        self.original_boxes = dataset_df['box'].to_numpy()
         self.words = dataset_df['text'].to_numpy()
         self.image_file_names = dataset_df['image_path'].to_numpy()
         self.word_labels = dataset_df['label'].to_numpy()
@@ -28,4 +30,5 @@ class NERDataset(Dataset):
                                         padding="max_length", truncation=True, return_tensors='pt')
         for k, v in encoded_inputs.items():
             encoded_inputs[k] = v.squeeze()
+        encoded_inputs.update({"original_bbox": torch.Tensor(self.original_boxes[idx])})
         return encoded_inputs
