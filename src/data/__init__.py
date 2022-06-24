@@ -1,2 +1,2 @@
-from .transform import DocumentWarehouse
+from .transform import DocumentWarehouse, Document, TrainingDocumentWarehouse
 from .data import NERDataset
