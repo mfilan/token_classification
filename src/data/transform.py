@@ -2,7 +2,7 @@ import json
 import os
 from dataclasses import dataclass, field, asdict
 from pathlib import Path
-from typing import List, Dict, Any, Optional, Union, TypedDict
+from typing import List, Dict, Any, Union, TypedDict
 
 import numpy as np
 import pandas as pd
@@ -104,8 +104,8 @@ class DocumentImage:
 class Document:
     image: Image
     annotations: Dict[str, Any]
-    image_path: str = None
-    annot_path: str = None
+    image_path: Union[str, None] = None
+    annot_path: Union[str, None] = None
 
     document_image: DocumentImage = field(init=False)
     document_text: DocumentText = field(init=False)
@@ -185,19 +185,19 @@ class TrainingDocumentWarehouse(DocumentWarehouse):
         return image_files, annotation_files
 
     @staticmethod
-    def validate_numpy_arr(arr: np.array) -> Union[None, np.array]:
+    def validate_numpy_arr(arr: np.ndarray) -> Union[None, np.ndarray]:
         if arr.size == 0:
             return None
         return arr
 
     @staticmethod
-    def select_data(dataframe: pd.DataFrame, indices: Union[np.array, None]) -> Union[pd.DataFrame, None]:
+    def select_data(dataframe: pd.DataFrame, indices: Union[np.ndarray, None]) -> Union[pd.DataFrame, None]:
         if indices is None:
             return None
         return dataframe.iloc[indices]
 
-    def split_indices(self, test_percentage: Optional[float] = 0.0,
-                      validation_percentage: Optional[float] = 0.0):
+    def split_indices(self, test_percentage: float = 0.0,
+                      validation_percentage: float = 0.0):
         num_of_indices = len(self.documents)
         all_indices = np.arange(num_of_indices)
         np.random.shuffle(all_indices)
@@ -216,8 +216,8 @@ class TrainingDocumentWarehouse(DocumentWarehouse):
             data_list.append(data_dict)
         return pd.DataFrame(data_list)
 
-    def get_datasets(self, test_percentage: Optional[float] = 0.0,
-                     validation_percentage: Optional[float] = 0.0) -> Datasets:
+    def get_datasets(self, test_percentage: float = 0.0,
+                     validation_percentage: float = 0.0) -> Datasets:
         test_indices, validation_indices, train_indices = \
             self.split_indices(test_percentage=test_percentage, validation_percentage=validation_percentage)
         data: pd.DataFrame = self.get_all_data()
