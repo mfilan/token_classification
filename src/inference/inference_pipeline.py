@@ -1,16 +1,13 @@
-import numpy as np
-import src.utils as utils
-from typing import List, Dict, Any, Protocol
-from PIL import Image
-from src.data import DocumentWarehouse
-import torch
-from transformers import LayoutLMv3Processor
 import re
+from typing import List, Dict, Any
 
+import numpy as np
+import torch
+from PIL import Image
+from transformers import LayoutLMv3Processor
 
-class InferencePipelineStep(Protocol):
-    def process(self):
-        pass
+import src.utils as utils
+from src.data import DocumentWarehouse
 
 
 class PostProcessor:
@@ -189,8 +186,16 @@ class Preprocessor:
                                         return_special_tokens_mask=True,
                                         return_offsets_mapping=True,
                                         padding="max_length", truncation=True, return_tensors='pt')
+        model_inputs['box'] = np.array([self.pad_boxes(i) for i in model_inputs['box']])
         encoded_inputs.update({"original_bbox": torch.Tensor(model_inputs['box'])})
         return encoded_inputs
+
+    @staticmethod
+    def pad_boxes(document_boxes: List[List[int]]) -> np.ndarray:
+        document_boxes = np.array(document_boxes)
+        length = len(document_boxes)
+        padding = int(max(512 - length, 0))
+        return np.array(np.pad(document_boxes, ((0, padding), (0, 0)))[:512])
 
 
 class InferenceModelHandler:
@@ -223,7 +228,7 @@ class InferencePipeline:
         self.postprocessor = PostProcessor(processor, id2label)
 
     def predict(self, images: List[Image.Image],
-                annotations: List[Dict[str, Any]], ):
+                annotations: List[Dict[str, Any]]):
         model_inputs = self.preprocessor.process(images, annotations)
         model_outputs = self.model_inference.process(model_inputs)
         processed_output = self.postprocessor.process(model_outputs)

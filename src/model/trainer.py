@@ -1,3 +1,4 @@
+import logging
 from os.path import join
 from pathlib import Path
 
@@ -6,8 +7,6 @@ import pandas as pd
 import torch
 import wandb
 from tqdm.auto import tqdm, trange
-
-import logging
 
 logger = logging.getLogger("NER")
 
@@ -147,7 +146,8 @@ class ModelTrainer:
                 wandb.log({'classification report': wandb.Table(dataframe=classification_report.reset_index())})
                 wandb.finish()
             logger.info(classification_report.to_string())
-            results_name = f'{str(self.save_model_name.parent)}/{str(self.save_model_name.name).rstrip(".pth")}_classification_report.csv'
+            results_name = f'{str(self.save_model_name.parent)}/' \
+                           f'{str(self.save_model_name.name).rstrip(".pth")}_classification_report.csv'
             classification_report.to_csv(f'{results_name}')
             logger.info(f"Results saved as {results_name}")
             return {'training_loss': self.training_loss,

@@ -1,11 +1,12 @@
-from pathlib import Path
 import json
-from typing import List, Dict, Any, Optional, Union, TypedDict
-from dataclasses import dataclass, field, asdict
-import pandas as pd
-import numpy as np
-from PIL import Image
 import os
+from dataclasses import dataclass, field, asdict
+from pathlib import Path
+from typing import List, Dict, Any, Optional, Union, TypedDict
+
+import numpy as np
+import pandas as pd
+from PIL import Image
 
 
 class Datasets(TypedDict):
@@ -39,11 +40,12 @@ class TextObject:
         for word_idx, word_dict in enumerate(self.words_dict):
             label_prefix = self.get_label_prefix(word_idx, len(self.words_dict))
             word_label = label_prefix + self.label if self.label != 'other' else self.label
-            self.words.append(Word(word_dict['box'],
-                                   self.normalize_box(word_dict['box'], self.image_width, self.image_height),
-                                   word_dict['text'],
-                                   word_label
-                                   ))
+            if word_dict['text'] != '':
+                self.words.append(Word(word_dict['box'],
+                                       self.normalize_box(word_dict['box'], self.image_width, self.image_height),
+                                       word_dict['text'],
+                                       word_label
+                                       ))
 
     @staticmethod
     def normalize_box(box: List[int], image_width, image_height: int) -> List[int]:
@@ -75,14 +77,16 @@ class DocumentText:
     text_objects: List[TextObject] = field(init=False, default_factory=list)
 
     def __post_init__(self) -> None:
+
         for text_dict in self.annotations['form']:
-            self.text_objects.append(TextObject(text_dict['box'],
-                                                text_dict['text'],
-                                                text_dict['label'],
-                                                text_dict['words'],
-                                                text_dict['id'],
-                                                self.image_height,
-                                                self.image_width))
+            if text_dict['text'] != '':
+                self.text_objects.append(TextObject(text_dict['box'],
+                                                    text_dict['text'],
+                                                    text_dict['label'],
+                                                    text_dict['words'],
+                                                    text_dict['id'],
+                                                    self.image_height,
+                                                    self.image_width))
 
 
 @dataclass
