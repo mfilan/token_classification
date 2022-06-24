@@ -1,9 +1,10 @@
 import hydra
-from data import TrainingDocumentWarehouse, NERDataset
-from model import ModelTrainer
-from torch.utils.data import DataLoader
-from hydra.utils import instantiate
 import torch
+from hydra.utils import instantiate
+from torch.utils.data import DataLoader
+
+from src.data import TrainingDocumentWarehouse, NERDataset
+from src.model import ModelTrainer
 
 
 @hydra.main(config_path='conf', config_name='config', version_base="1.2")

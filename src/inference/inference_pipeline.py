@@ -3,7 +3,7 @@ from typing import List, Dict, Any
 
 import numpy as np
 import torch
-from PIL import Image
+from PIL import Image  # type: ignore
 from transformers import LayoutLMv3Processor
 
 import src.utils as utils
@@ -140,12 +140,12 @@ class PostProcessor:
             coordinates.append(self.get_box_coordinates(word_block))
             text += word_block['Text'] + ' '
             confidences.append(word_block['Confidence'])
-        coordinates = self.merge_coordinates(coordinates)
+        merged_coordinates = self.merge_coordinates(coordinates)
         text = text.strip(" ")
-        entity = {'Top': coordinates[1],
-                  'Bottom': coordinates[3],
-                  'Left': coordinates[0],
-                  'Right': coordinates[2],
+        entity = {'Top': merged_coordinates[1],
+                  'Bottom': merged_coordinates[3],
+                  'Left': merged_coordinates[0],
+                  'Right': merged_coordinates[2],
                   'Text': text,
                   'Confidence': round(sum(confidences) / len(confidences), 2),
                   'Label': self.strip_label(group[-1]['Label'])}
@@ -192,10 +192,10 @@ class Preprocessor:
 
     @staticmethod
     def pad_boxes(document_boxes: List[List[int]]) -> np.ndarray:
-        document_boxes = np.array(document_boxes)
-        length = len(document_boxes)
+        np_document_boxes: np.ndarray = np.array(document_boxes)
+        length = len(np_document_boxes)
         padding = int(max(512 - length, 0))
-        return np.array(np.pad(document_boxes, ((0, padding), (0, 0)))[:512])
+        return np.array(np.pad(np_document_boxes, ((0, padding), (0, 0)))[:512])
 
 
 class InferenceModelHandler:

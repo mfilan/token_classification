@@ -1,12 +1,14 @@
 import unittest
-from typing import List
 from pathlib import Path
-from parameterized import parameterized
-from src.data import transform
+from typing import List, Dict
+
 from hydra import compose, initialize
 from hydra.core.global_hydra import GlobalHydra
 from hydra.core.hydra_config import HydraConfig
-from omegaconf import OmegaConf
+from omegaconf import OmegaConf, DictConfig
+from parameterized import parameterized  # type: ignore
+
+from src.data import transform
 
 
 def prepare_config():
@@ -19,6 +21,12 @@ def prepare_config():
 
 
 class TestTextObject(unittest.TestCase):
+    cfg: DictConfig
+    text_dict: Dict
+    image_height: int
+    image_width: int
+    text_object: transform.TextObject
+
     @classmethod
     def setUpClass(cls) -> None:
         cls.cfg = prepare_config()
@@ -65,7 +73,7 @@ class TestTextObject(unittest.TestCase):
             ([1, 999, 799, 1000], 800, 1000, [1, 999, 998, 1000])
         ]
     )
-    def test_normalize_box(self, box: List[int], image_width, image_height: int, expected: List[int]) -> None:
+    def test_normalize_box(self, box: List[int], image_width: int, image_height: int, expected: List[int]) -> None:
         assert self.text_object.normalize_box(box, image_width, image_height) == expected
 
     @parameterized.expand(
@@ -82,11 +90,14 @@ class TestTextObject(unittest.TestCase):
 
 
 class TestTrainingDocumentWarehouse(unittest.TestCase):
+    cfg: DictConfig
+    training_document_warehouse: transform.TrainingDocumentWarehouse
+
     @classmethod
     def setUpClass(cls) -> None:
         cls.cfg = prepare_config()
-        cls.document_warehouse = transform.TrainingDocumentWarehouse(cls.cfg.dataset.images_dir,
-                                                                     cls.cfg.dataset.annotations_dir)
+        cls.training_document_warehouse = transform.TrainingDocumentWarehouse(cls.cfg.dataset.images_dir,
+                                                                              cls.cfg.dataset.annotations_dir)
 
     @parameterized.expand(
         [
@@ -98,42 +109,42 @@ class TestTrainingDocumentWarehouse(unittest.TestCase):
         ]
     )
     def test_get_file_name(self, value: Path, expected: str) -> None:
-        assert self.document_warehouse.get_file_name(value) == expected
+        assert self.training_document_warehouse.get_file_name(value) == expected
 
     @parameterized.expand(
         [
             (
-                [Path('../datasets/FUNSD/annotations/82562350.json')],
-                [Path('../datasets/FUNSD/images/82562350.png')],
-                ['../datasets/FUNSD/annotations/82562350.json'],
-                ['../datasets/FUNSD/images/82562350.png']
+                    [Path('../datasets/FUNSD/annotations/82562350.json')],
+                    [Path('../datasets/FUNSD/images/82562350.png')],
+                    ['../datasets/FUNSD/annotations/82562350.json'],
+                    ['../datasets/FUNSD/images/82562350.png']
             ),
             (
-                [Path('annotations/a.json')],
-                [Path('../datasets/FUNSD/images/a.png')],
-                ['annotations/a.json'],
-                ['../datasets/FUNSD/images/a.png']
+                    [Path('annotations/a.json')],
+                    [Path('../datasets/FUNSD/images/a.png')],
+                    ['annotations/a.json'],
+                    ['../datasets/FUNSD/images/a.png']
             ),
             (
-                [Path('a.json'), Path('b.json'), Path('c.json')],
-                [Path('c.png'), Path('a.png'), Path('b.png')],
-                ['a.json', 'b.json', 'c.json'],
-                ['a.png', 'b.png', 'c.png']
+                    [Path('a.json'), Path('b.json'), Path('c.json')],
+                    [Path('c.png'), Path('a.png'), Path('b.png')],
+                    ['a.json', 'b.json', 'c.json'],
+                    ['a.png', 'b.png', 'c.png']
             ),
             (
-                [Path('a.json'), Path('b.json'), Path('c.json'), Path('d.json')],
-                [Path('c.png'), Path('a.png'), Path('b.png'), Path('e.png')],
-                ['a.json', 'b.json', 'c.json'],
-                ['a.png', 'b.png', 'c.png']
+                    [Path('a.json'), Path('b.json'), Path('c.json'), Path('d.json')],
+                    [Path('c.png'), Path('a.png'), Path('b.png'), Path('e.png')],
+                    ['a.json', 'b.json', 'c.json'],
+                    ['a.png', 'b.png', 'c.png']
             ),
             (
-                [], [], [], []
+                    [], [], [], []
             ),
             (
-                ['a.json'], [], [], []
+                    ['a.json'], [], [], []
             ),
             (
-                [], ['a.png'], [], []
+                    [], ['a.png'], [], []
             ),
         ]
     )
@@ -144,5 +155,5 @@ class TestTrainingDocumentWarehouse(unittest.TestCase):
             expected_annotations: List[str],
             expected_images: List[str]
     ) -> None:
-        assert self.document_warehouse.pair_up_files(
+        assert self.training_document_warehouse.pair_up_files(
             annotation_file_paths, image_file_paths) == (expected_annotations, expected_images)

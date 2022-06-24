@@ -1,12 +1,14 @@
 import logging
 from os.path import join
 from pathlib import Path
+from typing import List, Any
 
 import numpy as np
-import pandas as pd
+import pandas as pd  # type: ignore
 import torch
 import wandb
-from tqdm.auto import tqdm, trange
+from torch.utils.data import DataLoader
+from tqdm.auto import tqdm, trange  # type: ignore
 
 logger = logging.getLogger("NER")
 
@@ -35,16 +37,16 @@ class ModelTrainer:
     def __init__(self,
                  model: torch.nn.Module,
                  device: torch.device,
-                 training_dataloader: torch.utils.data.Dataset,
-                 validation_dataloader: torch.utils.data.Dataset = None,
-                 test_dataloader: torch.utils.data.Dataset = None,
-                 lr_scheduler: torch.optim.lr_scheduler = None,
+                 labels: List[str],
+                 training_dataloader: DataLoader,
+                 validation_dataloader: DataLoader = None,
+                 test_dataloader: DataLoader = None,
+                 lr_scheduler: torch.optim.Optimizer = None,
                  epochs: int = 10,
                  epoch: int = 0,
                  use_wandb: bool = False,
                  project_name: str = "NERv2",
-                 save_model_name: str = join("models", "model.pth"),
-                 labels: list = None
+                 save_model_name: str = join("models", "model.pth")
                  ):
 
         logger.info('Initializing model trainer...')
@@ -69,9 +71,18 @@ class ModelTrainer:
             wandb.define_metric("validation_loss", step_metric="step")
 
         self.training_step = 0
-        self.training_loss = []
-        self.validation_loss = []
-        self.learning_rate = []
+        self.training_loss: List[Any] = []
+        self.validation_loss: List[Any] = []
+        self.learning_rate: List[Any] = []
+
+    def select_model_inputs(self, batch):
+        input_ids = batch['input_ids'].to(self.device),
+        attention_mask = batch['attention_mask'].to(self.device),
+        bbox = batch['bbox'].to(self.device),
+        labels = batch['labels'].to(self.device),
+        pixel_values = batch['pixel_values'].to(self.device)
+        return {'input_ids': input_ids, 'attention_mask': attention_mask, 'bbox': bbox, 'labels': labels,
+                'pixel_values': pixel_values}
 
     def train_log(self, loss):
         """
@@ -126,7 +137,7 @@ class ModelTrainer:
         """
 
         progressbar = trange(self.epochs, desc='Progress')
-        for i in progressbar:
+        for _ in progressbar:
             """Epoch counter"""
             self.epoch += 1  # epoch counter
 
@@ -168,16 +179,13 @@ class ModelTrainer:
         """
         self.model.train()  # train mode
         train_losses = []  # accumulate the losses here
-        batch_iter = tqdm(enumerate(self.training_dataloader), 'Training', total=len(self.training_dataloader),
+        batch_iter = tqdm(enumerate(self.training_dataloader), 'Training',
+                          total=self.training_dataloader.dataset.__len__,
                           leave=False)
 
         for i, batch in batch_iter:
             self.optimizer.zero_grad()  # zerograd the parameters
-            out = self.model(input_ids=batch['input_ids'].to(self.device),
-                             attention_mask=batch['attention_mask'].to(self.device),
-                             bbox=batch['bbox'].to(self.device),
-                             labels=batch['labels'].to(self.device),
-                             pixel_values=batch['pixel_values'].to(self.device))  # one forward pass
+            out = self.model(**self.select_model_inputs(batch))  # one forward pass
             loss = out.loss  # calculate loss
             loss_value = loss.item()
             train_losses.append(loss_value)
@@ -198,16 +206,13 @@ class ModelTrainer:
         """
         self.model.eval()  # evaluation mode
         valid_losses = []  # accumulate the losses here
-        batch_iter = tqdm(enumerate(self.validation_dataloader), 'Validation', total=len(self.validation_dataloader),
+        batch_iter = tqdm(enumerate(self.validation_dataloader), 'Validation',
+                          total=self.training_dataloader.dataset.__len__,
                           leave=False)
 
         for i, batch in batch_iter:
             with torch.no_grad():
-                out = self.model(input_ids=batch['input_ids'].to(self.device),
-                                 attention_mask=batch['attention_mask'].to(self.device),
-                                 bbox=batch['bbox'].to(self.device),
-                                 labels=batch['labels'].to(self.device),
-                                 pixel_values=batch['pixel_values'].to(self.device))  # one forward pass
+                out = self.model(**self.select_model_inputs(batch))  # one forward pass
                 loss = out.loss
                 loss_value = loss.item()
                 valid_losses.append(loss_value)
@@ -248,25 +253,21 @@ class ModelTrainer:
         self.model.eval()
         for batch in tqdm(self.test_dataloader, desc="Evaluating"):
             with torch.no_grad():
-                outputs = self.model(input_ids=batch['input_ids'].to(self.device),
-                                     attention_mask=batch['attention_mask'].to(self.device),
-                                     bbox=batch['bbox'].to(self.device),
-                                     labels=batch['labels'].to(self.device),
-                                     pixel_values=batch['pixel_values'].to(self.device))  # one forward pass
+                outputs = self.model(**self.select_model_inputs(batch))  # one forward pass
 
                 # predictions
                 predictions = outputs.logits.argmax(dim=2)
 
                 # Remove ignored index (special tokens)
                 true_predictions = [
-                    [self.index_to_label[int(p.detach().cpu().numpy())] for (p, l) in zip(prediction, label) if
-                     l != -100]
+                    [self.index_to_label[int(p.detach().cpu().numpy())] for (p, label) in zip(prediction, label) if
+                     label != -100]
                     for prediction, label in zip(predictions, batch['labels'])
                 ]
 
                 true_labels = [
-                    [self.index_to_label[int(l.detach().cpu().numpy())] for (p, l) in zip(prediction, label) if
-                     l != -100]
+                    [self.index_to_label[int(label.detach().cpu().numpy())] for (p, label) in zip(prediction, label) if
+                     label != -100]
                     for prediction, label in zip(predictions, batch['labels'])
                 ]
 
