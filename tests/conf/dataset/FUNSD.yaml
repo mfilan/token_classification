@@ -1,0 +1,31 @@
+data_dir: ${hydra:runtime.cwd}/../datasets/FUNSD
+annotations_dir:  ${hydra:runtime.cwd}/../datasets/FUNSD/annotations
+images_dir: ${hydra:runtime.cwd}/../datasets/FUNSD/images
+label2id:
+  B-answer: 0
+  E-answer: 1
+  I-answer: 2
+  S-answer: 3
+  B-header: 4
+  E-header: 5
+  I-header: 6
+  S-header: 7
+  other: 8
+  B-question: 9
+  E-question: 10
+  I-question: 11
+  S-question: 12
+id2label:
+  0: B-answer
+  1: E-answer
+  2: I-answer
+  3: S-answer
+  4: B-header
+  5: E-header
+  6: I-header
+  7: S-header
+  8: other
+  9: B-question
+  10: E-question
+  11: I-question
+  12: S-question

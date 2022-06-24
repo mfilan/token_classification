@@ -9,68 +9,10 @@ from hydra.core.hydra_config import HydraConfig
 from omegaconf import OmegaConf
 
 
-def assert_config(cfg) -> None:
-    raw_config = {
-        'dataset': {
-            "data_dir": "${hydra:runtime.cwd}/../datasets/FUNSD",
-            "annotations_dir": "${hydra:runtime.cwd}/../datasets/FUNSD/annotations",
-            "images_dir": "${hydra:runtime.cwd}/../datasets/FUNSD/images",
-            "label2id": {"B-answer": 0,
-                         "E-answer": 1,
-                         "I-answer": 2,
-                         "S-answer": 3,
-                         "B-header": 4,
-                         "E-header": 5,
-                         "I-header": 6,
-                         "S-header": 7,
-                         "other": 8,
-                         "B-question": 9,
-                         "E-question": 10,
-                         "I-question": 11,
-                         "S-question": 12
-            },
-            "id2label": {0: "B-answer",
-                         1: "E-answer",
-                         2: "I-answer",
-                         3: "S-answer",
-                         4: "B-header",
-                         5: "E-header",
-                         6: "I-header",
-                         7: "S-header",
-                         8: "other",
-                         9: "B-question",
-                         10: "E-question",
-                         11: "I-question",
-                         12: "S-question"
-            },
-        },
-        'training': {
-            'epoch_count': 10,
-            'lr': 5e-05,
-            'batch_size': 2,
-            'device': 'cpu',
-            'test_percentage': 0.15,
-            'validation_percentage': 0.15
-        },
-        'model': {
-            '_target_': 'model.ModelHandler',
-            'pretrained_model_name': 'microsoft/layoutlmv3-base',
-            'num_of_labels': 12
-        },
-        'params': {
-            'use_wandb': True,
-            'project_name': 'NERv3'
-        }
-    }
-    for key in list(cfg.keys())[1:]:
-        assert cfg[key] == raw_config[key]
-
-
 def prepare_config():
     GlobalHydra.instance().clear()
-    initialize(version_base="1.2", config_path="../src/conf")
+    initialize(version_base="1.2", config_path="conf")
     cfg = compose(config_name="config", return_hydra_config=True)
-    assert_config(cfg)
     HydraConfig().cfg = cfg
     OmegaConf.resolve(cfg)
     return cfg
@@ -139,12 +81,12 @@ class TestTextObject(unittest.TestCase):
         assert self.text_object.get_label_prefix(word_index, num_words) == expected
 
 
-class TestDocumentWarehouse(unittest.TestCase):
+class TestTrainingDocumentWarehouse(unittest.TestCase):
     @classmethod
     def setUpClass(cls) -> None:
         cls.cfg = prepare_config()
-        cls.document_warehouse = transform.DocumentWarehouse(cls.cfg.dataset.images_dir,
-                                                              cls.cfg.dataset.annotations_dir)
+        cls.document_warehouse = transform.TrainingDocumentWarehouse(cls.cfg.dataset.images_dir,
+                                                                     cls.cfg.dataset.annotations_dir)
 
     @parameterized.expand(
         [
