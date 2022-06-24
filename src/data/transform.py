@@ -5,8 +5,8 @@ from pathlib import Path
 from typing import List, Dict, Any, Union, TypedDict
 
 import numpy as np
-import pandas as pd
-from PIL import Image
+import pandas as pd  # type: ignore
+from PIL import Image  # type: ignore
 
 
 class Datasets(TypedDict):

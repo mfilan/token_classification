@@ -1,12 +1,14 @@
 import unittest
-from typing import List, Dict
 from pathlib import Path
-from parameterized import parameterized
-from src.data import transform
+from typing import List, Dict
+
 from hydra import compose, initialize
 from hydra.core.global_hydra import GlobalHydra
 from hydra.core.hydra_config import HydraConfig
 from omegaconf import OmegaConf, DictConfig
+from parameterized import parameterized  # type: ignore
+
+from src.data import transform
 
 
 def prepare_config():
@@ -95,7 +97,7 @@ class TestTrainingDocumentWarehouse(unittest.TestCase):
     def setUpClass(cls) -> None:
         cls.cfg = prepare_config()
         cls.training_document_warehouse = transform.TrainingDocumentWarehouse(cls.cfg.dataset.images_dir,
-                                                                     cls.cfg.dataset.annotations_dir)
+                                                                              cls.cfg.dataset.annotations_dir)
 
     @parameterized.expand(
         [
@@ -112,37 +114,37 @@ class TestTrainingDocumentWarehouse(unittest.TestCase):
     @parameterized.expand(
         [
             (
-                [Path('../datasets/FUNSD/annotations/82562350.json')],
-                [Path('../datasets/FUNSD/images/82562350.png')],
-                ['../datasets/FUNSD/annotations/82562350.json'],
-                ['../datasets/FUNSD/images/82562350.png']
+                    [Path('../datasets/FUNSD/annotations/82562350.json')],
+                    [Path('../datasets/FUNSD/images/82562350.png')],
+                    ['../datasets/FUNSD/annotations/82562350.json'],
+                    ['../datasets/FUNSD/images/82562350.png']
             ),
             (
-                [Path('annotations/a.json')],
-                [Path('../datasets/FUNSD/images/a.png')],
-                ['annotations/a.json'],
-                ['../datasets/FUNSD/images/a.png']
+                    [Path('annotations/a.json')],
+                    [Path('../datasets/FUNSD/images/a.png')],
+                    ['annotations/a.json'],
+                    ['../datasets/FUNSD/images/a.png']
             ),
             (
-                [Path('a.json'), Path('b.json'), Path('c.json')],
-                [Path('c.png'), Path('a.png'), Path('b.png')],
-                ['a.json', 'b.json', 'c.json'],
-                ['a.png', 'b.png', 'c.png']
+                    [Path('a.json'), Path('b.json'), Path('c.json')],
+                    [Path('c.png'), Path('a.png'), Path('b.png')],
+                    ['a.json', 'b.json', 'c.json'],
+                    ['a.png', 'b.png', 'c.png']
             ),
             (
-                [Path('a.json'), Path('b.json'), Path('c.json'), Path('d.json')],
-                [Path('c.png'), Path('a.png'), Path('b.png'), Path('e.png')],
-                ['a.json', 'b.json', 'c.json'],
-                ['a.png', 'b.png', 'c.png']
+                    [Path('a.json'), Path('b.json'), Path('c.json'), Path('d.json')],
+                    [Path('c.png'), Path('a.png'), Path('b.png'), Path('e.png')],
+                    ['a.json', 'b.json', 'c.json'],
+                    ['a.png', 'b.png', 'c.png']
             ),
             (
-                [], [], [], []
+                    [], [], [], []
             ),
             (
-                ['a.json'], [], [], []
+                    ['a.json'], [], [], []
             ),
             (
-                [], ['a.png'], [], []
+                    [], ['a.png'], [], []
             ),
         ]
     )

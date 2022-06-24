@@ -3,7 +3,7 @@ from typing import List, Dict, Any
 
 import numpy as np
 import torch
-from PIL import Image
+from PIL import Image  # type: ignore
 from transformers import LayoutLMv3Processor
 
 import src.utils as utils

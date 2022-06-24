@@ -1,7 +1,8 @@
+from typing import List, Dict, Any, Union
+
 import numpy as np
 import torch
-from PIL import ImageDraw, ImageFont, Image
-from typing import List, Dict, Any, Union
+from PIL import ImageDraw, ImageFont, Image  # type: ignore
 
 
 def to_numpy(vector: Union[torch.Tensor, np.ndarray]) -> np.ndarray:

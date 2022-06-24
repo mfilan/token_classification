@@ -1,9 +1,10 @@
+from typing import Dict
+
+import pandas as pd  # type: ignore
 import torch
+from PIL import Image  # type: ignore
 from torch.utils.data import Dataset
 from transformers import LayoutLMv2Processor
-from typing import Dict
-from PIL import Image
-import pandas as pd
 
 
 class NERDataset(Dataset):

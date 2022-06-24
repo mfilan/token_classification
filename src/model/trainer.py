@@ -4,11 +4,11 @@ from pathlib import Path
 from typing import List, Any
 
 import numpy as np
-import pandas as pd
+import pandas as pd  # type: ignore
 import torch
 import wandb
 from torch.utils.data import DataLoader
-from tqdm.auto import tqdm, trange
+from tqdm.auto import tqdm, trange  # type: ignore
 
 logger = logging.getLogger("NER")
 
